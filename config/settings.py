@@ -15,6 +15,7 @@ from datetime import timedelta
 import environ
 from google.oauth2 import service_account
 import os
+import dj_database_url
 
 env = environ.Env()
 
@@ -29,12 +30,14 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env("SECRET_KEY")
+SECRET_KEY = env(
+    "SECRET_KEY", default="django-insecure-v=ct5axdfanykcl6b8e)vg_jl9(@3h8a255tkr8s5hy2$#@ul#"
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env("DEBUG", default="True") == "True"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = env("ALLOWED_HOSTS", default="127.0.0.1").split(",")
 
 
 # Application definition
@@ -99,7 +102,15 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {
+if not DEBUG:
+    DATABASES = {
+        "default": dj_database_url.parse(
+            env
+        )
+    }
+
+else:
+    DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": "ecommerce_trial",
@@ -240,11 +251,19 @@ CACHES = {
 }
 
 # Google Cloud Storage
-STORAGES = {
-    "default": {"BACKEND": "storages.backends.gcloud.GoogleCloudStorage"},
-    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
-}
+if DEBUG:
+    STORAGES = {
+        "default": {"BACKEND": "storages.backends.gcloud.GoogleCloudStorage"},
+        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    }
+else:
+    GCP_KEY_PATH = env("GCP_KEY_PATH")
 
+    if os.path.exists(GCP_KEY_PATH):
+        env("GOOGLE_APPLICATION_CREDENTIALS") = GCP_KEY_PATH
+    else:
+        raise FileNotFoundError("Google Cloud Storage key file not found")
+    
 GS_BUCKET_NAME = os.getenv("GS_BUCKET_NAME")
 GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
     "service_account_file.json"
