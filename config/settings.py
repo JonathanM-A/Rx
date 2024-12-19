@@ -260,7 +260,11 @@ else:
     GCP_KEY_PATH = env("GCP_KEY_PATH")
 
     if os.path.exists(GCP_KEY_PATH):
-        env("GOOGLE_APPLICATION_CREDENTIALS") = GCP_KEY_PATH
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = GCP_KEY_PATH
+        STORAGES = {
+        "default": {"BACKEND": "storages.backends.gcloud.GoogleCloudStorage"},
+        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+        }
     else:
         raise FileNotFoundError("Google Cloud Storage key file not found")
     
