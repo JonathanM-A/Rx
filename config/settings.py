@@ -218,13 +218,14 @@ SIMPLE_JWT = {
 
 # Debug Toolbar
 # https://django-debug-toolbar.readthedocs.io/en/latest/configuration.html
-INTERNAL_IPS = [
-    "127.0.0.1",
-]
+if DEBUG:
+    INTERNAL_IPS = [
+        "127.0.0.1",
+    ]
 
 
 def show_toolbar(request):
-    return True
+    return DEBUG
 
 
 DEBUG_TOOLBAR_CONFIG = {
