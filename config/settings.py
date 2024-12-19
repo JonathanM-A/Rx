@@ -16,6 +16,7 @@ import environ
 from google.oauth2 import service_account
 import os
 import dj_database_url
+import json
 
 env = environ.Env()
 
@@ -256,6 +257,10 @@ if DEBUG:
         "default": {"BACKEND": "storages.backends.gcloud.GoogleCloudStorage"},
         "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
     }
+    GS_BUCKET_NAME = os.getenv("GS_BUCKET_NAME")
+    GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
+        "service_account_file.json"
+    )
 else:
     GCP_KEY_PATH = env("GCP_KEY_PATH")
 
@@ -267,8 +272,10 @@ else:
         }
     else:
         raise FileNotFoundError("Google Cloud Storage key file not found")
-    
+
+    GS_CREDENTIALS_JSON = os.getenv("service-account-file")
+    if GS_CREDENTIALS_JSON:
+        credentials_dict = json.loads(GS_CREDENTIALS_JSON)
+        GS_CREDENTIALS = service_account.Credentials.from_service_account_info(credentials_dict)
+
 GS_BUCKET_NAME = os.getenv("GS_BUCKET_NAME")
-GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
-    "service_account_file.json"
-)
