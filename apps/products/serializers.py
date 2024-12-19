@@ -14,6 +14,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "pack_size",
             "cost_price_pack",
             "selling_price_pack",
+            "image"
         ]
 
     def validate(self, data):

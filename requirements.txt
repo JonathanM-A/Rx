@@ -22,6 +22,7 @@ google-cloud-storage==2.19.0
 google-crc32c==1.6.0
 google-resumable-media==2.7.2
 googleapis-common-protos==1.66.0
+gunicorn==23.0.0
 idna==3.10
 inflection==0.5.1
 packaging==24.2
@@ -42,3 +43,4 @@ sqlparse==0.5.2
 typing_extensions==4.12.2
 uritemplate==4.1.1
 urllib3==2.2.3
+whitenoise==6.8.2
