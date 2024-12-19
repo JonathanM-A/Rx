@@ -19,6 +19,7 @@ class UserSerializer(BaseModelSerializer):
             "is_staff",
             "is_admin",
             "is_management",
+            "is_superuser"
         ]
 
     def create(self, validated_data):
