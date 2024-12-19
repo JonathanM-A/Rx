@@ -242,7 +242,7 @@ CACHES = {
 # Google Cloud Storage
 STORAGES = {
     "default": {"BACKEND": "storages.backends.gcloud.GoogleCloudStorage"},
-    # "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
 }
 
 GS_BUCKET_NAME = os.getenv("GS_BUCKET_NAME")
