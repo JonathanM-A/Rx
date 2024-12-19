@@ -59,7 +59,7 @@ class UserManager(BaseUserManager):
             name=name,
         )
         user.set_password(password)
-        user.is_staff, user.is_admin = True, True
+        user.is_staff, user.is_admin, user.is_warehouse, user.is_management, user.is_superuser = True, True, True, True, True
         user.save()
         return user
 
