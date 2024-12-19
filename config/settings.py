@@ -105,7 +105,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 if not DEBUG:
     DATABASES = {
         "default": dj_database_url.parse(
-            env
+            env("DATABASE_URL")
         )
     }
 
