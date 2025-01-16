@@ -1,8 +1,10 @@
+import uuid
 from django.db import models
 from django.utils.text import slugify
 from django.dispatch import receiver
 from django.db.models.signals import pre_save
 from django_countries.fields import CountryField
+from django.core.validators import MinValueValidator
 from ..common.models import BaseModel
 from ..products.models import Product
 
@@ -13,7 +15,8 @@ class Facility(BaseModel):
     city = models.CharField(null=False, blank=False)
     region = models.CharField(null=False, blank=False)
     country = CountryField(null=False, blank=False)
-    slug = models.CharField(unique=True, null=True, blank=True)
+    has_delivery = models.BooleanField(blank=False, default=True)
+    slug = models.CharField(unique=True, null=True, blank=False)
     products = models.ManyToManyField(
         Product, through="FacilityProduct", related_name="facilities"
     )
@@ -45,11 +48,12 @@ def facility_pre_save_receiver(sender, instance, *args, **kwargs):
         instance.slug = slug
 
 
-# Custom Intermediate Table
-class FacilityProduct(models.Model):
+class FacilityProduct(BaseModel):
     facility = models.ForeignKey(Facility, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.IntegerField(default=0, null=False, blank=False)
+    quantity = models.IntegerField(
+        default=0, null=False, blank=False, validators=[MinValueValidator(0)]
+    )
 
     def __str__(self):
         return str(self.product)

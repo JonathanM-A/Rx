@@ -8,24 +8,14 @@ class UserAdmin(BaseUserAdmin):
     list_display = (
         "id",
         "email",
-        "name",
-        "facility",
-        "is_warehouse",
-        "is_admin",
-        "is_management",
-        "is_active",
-        "created_at",
-        "modified_at",
     )
-    list_filter = ("is_admin", "is_warehouse", "is_management", "is_active")
-    search_fields = ("email", "name")
+    search_fields = ("email",)
 
     fieldsets = (
         (None, {"fields": ("email", "password")}),
-        ("Personal Info", {"fields": ("name", "facility")}),
         (
             "Permissions",
-            {"fields": ("is_admin", "is_warehouse", "is_management", "is_active")},
+            {"fields": ("is_active", "is_superuser", "is_employee", "is_client")},
         ),
         ("Important dates", {"fields": ("created_at", "modified_at")}),
     )
@@ -37,14 +27,10 @@ class UserAdmin(BaseUserAdmin):
                 "classes": ("wide",),
                 "fields": (
                     "email",
-                    "name",
-                    "facility",
                     "password1",
                     "password2",
-                    "is_admin",
-                    "is_warehouse",
-                    "is_management",
-                    "is_warehouse",
+                    "is_employee",
+                    "is_client"
                 ),
             },
         ),

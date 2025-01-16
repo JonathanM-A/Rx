@@ -56,7 +56,8 @@ INSTALLED_APPS = [
     "apps.common",
     "apps.products",
     "apps.clients",
-    "apps.cart",
+    "apps.sales",
+    "apps.staff",
     "django_filters",
     "debug_toolbar",
     "django_countries",
@@ -167,7 +168,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = "users.User"
 
 # Django SMTP
-
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.mailersend.net"
 EMAIL_PORT = 587
@@ -201,6 +201,7 @@ REST_FRAMEWORK = {
 REST_AUTH = {
     "USE_JWT": True,
     "JWT_AUTH_HTTPONLY": False,
+    "OLD_PASSWORD_FIELD_ENABLED": True,
 }
 PASSWORD_RESET_CONFIRM_URL = "password_reset_confirm"
 COURIER_AUTH_TOKEN = env("COURIER_AUTH_TOKEN")
@@ -258,7 +259,7 @@ if DEBUG:
         "default": {"BACKEND": "storages.backends.gcloud.GoogleCloudStorage"},
         "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
     }
-    GS_BUCKET_NAME = os.getenv("GS_BUCKET_NAME")
+    GS_BUCKET_NAME = env("GS_BUCKET_NAME")
     GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
         "service_account_file.json"
     )

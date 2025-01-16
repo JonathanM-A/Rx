@@ -11,12 +11,14 @@ class WarehouseProduct(models.Model):
     batch_no = models.CharField(max_length=20, blank=False, null=False)
     expiry_date = models.DateField(blank=False, null=False)
     quantity = models.IntegerField(default=0, null=False, blank=False)
+    is_expired = models.BooleanField(default=False)
 
     def __str__(self) -> str:
         return (
             f"{self.product.name}, Batch No.: {self.batch_no}, "
             f"Expiry: {self.expiry_date}, Quantity: {self.quantity}"
         )
+
 
 
 class WarehouseTransfers(BaseModel):
@@ -53,7 +55,6 @@ class WarehouseTransfers(BaseModel):
         return f"Transfer No.: {self.transfer_no}, Date: {self.created_at}"
 
 
-# Custom Intermediate Table
 class FacilityWarehouseTransfers(models.Model):
     transfer = models.ForeignKey(
         WarehouseTransfers, on_delete=models.CASCADE, related_name="transfer_products"
@@ -67,11 +68,11 @@ class WarehouseInbound(BaseModel):
     invoice_no = models.CharField(null=False, blank=False)
     invoice_date = models.DateField(null=False, blank=False)
     warehouse_products = models.ManyToManyField(
-        WarehouseProduct, through="ProductsWarehouseInbound",
+        WarehouseProduct, through="WarehouseProductsInbound",
     )
 
-# Custom Intermediate Table
-class ProductsWarehouseInbound(models.Model):
+
+class WarehouseProductsInbound(models.Model):
     inbound = models.ForeignKey(WarehouseInbound, on_delete=models.CASCADE, related_name="inbound_products")
     warehouse_product = models.ForeignKey(WarehouseProduct, on_delete=models.CASCADE, related_name="inbound_products")
     quantity = models.IntegerField(null=False, blank=False)

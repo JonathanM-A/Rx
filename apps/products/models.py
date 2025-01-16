@@ -16,14 +16,14 @@ class Product(BaseModel):
         decimal_places=2,
         blank=False,
         null=False,
-        validators=[MinValueValidator(0)],
+        validators=[MinValueValidator(0.01)],
     )
     selling_price_pack = models.DecimalField(
         max_digits=7,
         decimal_places=2,
         blank=False,
         null=False,
-        validators=[MinValueValidator(0)],
+        validators=[MinValueValidator(0.01)],
     )
     image = models.ImageField(null=True, blank=True)
 

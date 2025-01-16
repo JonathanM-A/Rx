@@ -18,7 +18,6 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework import permissions
 import debug_toolbar
-from dj_rest_auth.views import PasswordResetConfirmView, PasswordResetView
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
@@ -40,17 +39,7 @@ urlpatterns = [
     path("__debug__/", include(debug_toolbar.urls)),
     path("admin/", admin.site.urls),
     path("api/", include("config.api_urls")),
-    path(
-        "auth/password/reset/",
-        PasswordResetView.as_view(),
-        name="password_reset",
-    ),
-    path(
-        "auth/password/reset/confirm/<uidb64>/<token>/",
-        PasswordResetConfirmView.as_view(),
-        name="password_reset_confirm",
-    ),
-    path("auth/", include("dj_rest_auth.urls")),
+    path("auth/", include("config.auth_urls")),
     path(
         "swagger/",
         schema_view.with_ui("swagger", cache_timeout=0),

@@ -42,10 +42,13 @@ class FacilityProductSerializer(serializers.ModelSerializer):
         queryset=Product.objects.all(), write_only=True
     )
     product_name = serializers.StringRelatedField(source="product", read_only=True)
+    selling_price = serializers.DecimalField(source="product.unit_selling_price", max_digits=7, decimal_places=2)
+    image = serializers.ImageField(source="product.image")
 
     class Meta:
         model = FacilityProduct
-        fields = ["facility", "product", "product_name","quantity"]
+        fields = ["facility", "product", "product_name","quantity", "selling_price", "image"]
+        read_only_fields = ["product_name", "selling_price", "image"]
 
     def validate_quantity(self, value):
         if int(value) < 0:
@@ -53,7 +56,10 @@ class FacilityProductSerializer(serializers.ModelSerializer):
                 _("Quantity cannot be less than 0")
             )
         return int(value)
-
+    
+    def validate(self, attrs):
+        print("HERE", attrs)
+        return super().validate(attrs)
 
 class FacilityProductSerializerNoQuantity(FacilityProductSerializer):
     class Meta(FacilityProductSerializer.Meta):
