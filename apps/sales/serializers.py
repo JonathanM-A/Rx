@@ -182,7 +182,7 @@ class SaleSerializer(BaseModelSerializer):
     class Meta:
         model = Sale
         fields = [
-            "id"
+            "id",
             "created_at",
             "client",
             "order",

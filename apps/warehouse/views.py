@@ -44,7 +44,8 @@ class WarehouseTransferView(ModelViewSet):
     filterset_fields = ["transfer_no", "facility__name", "created_at"]
 
     def get_queryset(self):
-        user = self.request.user.staff
+        if hasattr(user, "staff"):
+            user = self.request.user.staff
 
         if not user.facility:
             queryset = (

@@ -27,7 +27,7 @@ class CartViewSet(ModelViewSet):
     def get_queryset(self):
         user = self.request.user
 
-        if user.is_employee:
+        if hasattr(user, "is_employee"):
             queryset = (
                 Cart.objects.all().select_related("client").prefetch_related("facility_products")
             )
@@ -59,7 +59,7 @@ class SaleViewSet(ModelViewSet):
         if hasattr(user, "staff"):
             user = user.staff
             queryset = Sale.objects.filter(facility=user.facility).prefetch_related("facility_products")
-        else:
+        elif hasattr(user, "client"):
             queryset = Sale.objects.filter(client=user.client).prefetch_related("facility_products")
         return queryset
 

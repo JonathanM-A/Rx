@@ -10,7 +10,7 @@ class UserSerializer(BaseModelSerializer):
     class Meta:
         model = User
         fields = [
-            "id"
+            "id",
             "email",
             "password",
             "is_staff",
