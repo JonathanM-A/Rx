@@ -2,13 +2,14 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import IsAdminUser
 from .models import Staff
 from .serializers import StaffSerializer
 from .permissions import IsAdmin, IsManagement
 
 
 class StaffViewSet(ModelViewSet):
-    permission_classes = [IsAdmin | IsManagement]
+    permission_classes = [IsAdmin | IsManagement | IsAdminUser]
     queryset = Staff.objects.all()
     serializer_class = StaffSerializer
     http_method_names = [m for m in ModelViewSet.http_method_names if m != "delete"]
