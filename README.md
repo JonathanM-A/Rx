@@ -60,6 +60,12 @@ Rx is a comprehensive solution for managing pharmacy inventory, client orders, a
    python manage.py runserver
    ```
 
+7. Start the redis server:
+
+   ```bash
+   redis-server
+   ```
+
 ## Contributing
 
 Contributions are welcome! Please feel free to fork this repository and submit pull requests. If you reproduce this project in any form, I kindly ask that you acknowledge my work.
