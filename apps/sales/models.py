@@ -16,11 +16,17 @@ PAYMENT_METHOD = [
     ("no cost", "Provide at no cost"),
 ]
 
+STATUS_CHOICES = [
+    ("pending", "Pending"),
+    ("in progress", "In Progress"),
+    ("completed", "Completed"),
+    ("cancelled", "Cancelled"),
+]
+
 
 class Cart(BaseModel):
-    client = models.OneToOneField(
-        Client, on_delete=models.CASCADE, related_name="cart"
-    )
+    
+    client = models.OneToOneField(Client, on_delete=models.CASCADE, related_name="cart")
     facility_products = models.ManyToManyField(FacilityProduct, through="CartProduct")
     total_cost = models.DecimalField(
         max_digits=10, decimal_places=2, blank=False, null=True
@@ -35,6 +41,7 @@ class Cart(BaseModel):
 
 
 class CartProduct(models.Model):
+
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
     facility_product = models.ForeignKey(FacilityProduct, on_delete=models.CASCADE)
     quantity = models.IntegerField(blank=False, validators=[MinValueValidator(1)])
@@ -49,6 +56,7 @@ class CartProduct(models.Model):
 
 
 class Sale(BaseModel):
+
     client = models.ForeignKey(Client, on_delete=models.CASCADE)
     facility = models.ForeignKey(Facility, on_delete=models.CASCADE)
     facility_products = models.ManyToManyField(
@@ -73,6 +81,7 @@ class Sale(BaseModel):
 
 
 class SaleFacilityProduct(models.Model):
+
     sale = models.ForeignKey(Sale, on_delete=models.CASCADE)
     facility_product = models.ForeignKey(FacilityProduct, on_delete=models.CASCADE)
     quantity = models.IntegerField(blank=False, validators=[MinValueValidator(1)])
@@ -92,20 +101,10 @@ class SaleFacilityProduct(models.Model):
 
 
 class Order(BaseModel):
-    STATUS_CHOICES = [
-        ("pending", "Pending"),
-        ("in progress", "In Progress"),
-        ("completed", "Completed"),
-        ("cancelled", "Cancelled"),
-    ]
-
-    IMMUTABLE_FIELDS = ["client", "contact", "location"]
 
     client = models.ForeignKey(Client, on_delete=models.CASCADE)
     contact = models.CharField(null=True, blank=True, validators=[phone_validator])
-    facility_products = models.ManyToManyField(
-        FacilityProduct, through="OrderProduct"
-    )
+    facility_products = models.ManyToManyField(FacilityProduct, through="OrderProduct")
     location = models.URLField(blank=False, validators=[location_validator])
     status = models.CharField(choices=STATUS_CHOICES, default="pending")
     payment_method = models.CharField(choices=PAYMENT_METHOD, blank=False)
@@ -119,10 +118,18 @@ class Order(BaseModel):
             try:
                 existing = Order.objects.get(pk=self.pk)
 
-                for field_name in self.IMMUTABLE_FIELDS:
+                field_names = [
+                    field.name
+                    for field in self._meta.get_fields()
+                    if field.name != "status"
+                ]
+
+                for field_name in field_names:
                     if getattr(self, field_name) != getattr(existing, field_name):
                         raise ValidationError(
-                            _(f"The field {field_name} is immutable and cannot be updated")
+                            _(
+                                f"The field {field_name} is immutable and cannot be updated"
+                            )
                         )
             except Order.DoesNotExist:
                 pass
@@ -138,7 +145,43 @@ class Order(BaseModel):
 
 
 class OrderProduct(models.Model):
+
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
     facility_product = models.ForeignKey(FacilityProduct, on_delete=models.CASCADE)
     quantity = models.IntegerField(blank=False, validators=[MinValueValidator(1)])
     line_cost = models.DecimalField(max_digits=10, decimal_places=2, blank=False)
+
+
+class Prescription(BaseModel):
+
+    client = models.ForeignKey(Client, on_delete=models.CASCADE)
+    prescription = models.ImageField(blank=False)
+    location = models.URLField(blank=False, validators=[location_validator])
+    contact = models.CharField(null=True, blank=True, validators=[phone_validator])
+    status = models.CharField(choices=STATUS_CHOICES, default="pending")
+
+    def clean(self):
+        super().clean()
+        if self.pk:
+            try:
+                existing = Prescription.objects.get(pk=self.pk)
+
+                field_names = [
+                    field.name
+                    for field in self._meta.get_fields()
+                    if field.name != "status"
+                ]
+
+                for field_name in field_names:
+                    if getattr(self, field_name) != getattr(existing, field_name):
+                        raise ValidationError(
+                            _(
+                                f"The field {field_name} is immutable and cannot be updated"
+                            )
+                        )
+            except Prescription.DoesNotExist:
+                pass
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)

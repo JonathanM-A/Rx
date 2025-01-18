@@ -3,7 +3,15 @@ from django.db import transaction
 from django.db.models import F
 from django.core.validators import MinValueValidator
 from rest_framework import serializers
-from .models import Cart, CartProduct, Sale, SaleFacilityProduct, Order, OrderProduct
+from .models import (
+    Cart,
+    CartProduct,
+    Sale,
+    SaleFacilityProduct,
+    Order,
+    OrderProduct,
+    Prescription,
+)
 from ..clients.models import Client
 from ..facilities.models import FacilityProduct
 from ..common.serializers import BaseModelSerializer
@@ -86,12 +94,7 @@ class CartSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Cart
-        fields = [
-            "client",
-            "products",
-            "cart_products",
-            "total_cost",
-        ]
+        fields = "__all__"
         read_only_fields = ["total_cost", "cart_products"]
 
     def create(self, validated_data):
@@ -169,9 +172,7 @@ class SaleFacilityProductSerializer(serializers.ModelSerializer):
 
 
 class SaleSerializer(BaseModelSerializer):
-    client = serializers.PrimaryKeyRelatedField(
-        queryset=Client.objects.all()
-    )
+    client = serializers.PrimaryKeyRelatedField(queryset=Client.objects.all())
     order = serializers.PrimaryKeyRelatedField(
         queryset=Order.objects.all(), required=False, write_only=True
     )
@@ -181,22 +182,10 @@ class SaleSerializer(BaseModelSerializer):
 
     class Meta:
         model = Sale
-        fields = [
-            "id",
-            "created_at",
-            "client",
-            "order",
-            "facility",
-            "facility_products",
-            "total_cost",
-            "payment_method",
-            "created_by",
-        ]
+        fields = "__all__"
 
         read_only_fields = [
-            "id"
             "facility_products",
-            "created_at",
             "total_cost",
             "facility",
             "created_by",
@@ -212,7 +201,7 @@ class SaleSerializer(BaseModelSerializer):
             data["order"] = order
         elif hasattr(client, "cart"):
             data["cart"] = client.cart
-        
+
         return data
 
     @transaction.atomic()
@@ -305,21 +294,11 @@ class OrderProductSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer):
     facility_products = OrderProductSerializer(
         many=True, source="orderproduct_set", required=False
-        )
+    )
 
     class Meta:
         model = Order
-        fields = [
-            "id",
-            "client",
-            "contact",
-            "location",
-            "facility_products",
-            "total_cost",
-            "payment_method",
-            "status",
-            "created_at",
-        ]
+        fields = "__all__"
         read_only_fields = [
             "client",
             "facility_products",
@@ -336,13 +315,12 @@ class OrderSerializer(serializers.ModelSerializer):
             data["client"] = user.client
 
             data = super().validate(data)
-            user = self.context["request"].user
 
             phone_number = data.get("contact", None)
 
             if not phone_number:
                 phone_number = user.client.phone_number
-                data["phone_number"] = phone_number
+                data["contact"] = phone_number
 
         return data
 
@@ -375,3 +353,27 @@ class OrderSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         representation["client"] = str(instance.client)
         return representation
+
+
+class PrescriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Prescription
+        fields = "__all__"
+        read_only_fields = ["client"]
+    
+    def validate(self, data):
+        user = self.context["request"].user
+
+        data = super().validate(data)
+
+        if hasattr(user, "client"):
+            data["client"] = user.client
+
+            phone_number = data.get("contact", None)
+
+            if not phone_number:
+                phone_number = user.client.phone_number
+                data["contact"] = phone_number
+        
+        return data
+        

@@ -5,10 +5,18 @@ from django.db import transaction
 from rest_framework.exceptions import ValidationError
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
-from .models import Cart, Sale, Order
-from .serializers import CartSerializer, SaleSerializer, OrderSerializer
+from .models import Cart, Sale, Order, Prescription
+from .serializers import (
+    CartSerializer,
+    SaleSerializer,
+    OrderSerializer,
+    PrescriptionSerializer,
+)
 from ..staff.permissions import IsRetail, IsAdmin
 from ..users.permissions import IsClient
+
+
+TERMINAL_STATUSES = ["completed", "cancelled"]
 
 
 class CartViewSet(ModelViewSet):
@@ -17,7 +25,7 @@ class CartViewSet(ModelViewSet):
     serializer_class = CartSerializer
     http_method_names = [
         m for m in ModelViewSet.http_method_names if m not in ["put", "patch"]
-        ]
+    ]
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -29,7 +37,9 @@ class CartViewSet(ModelViewSet):
 
         if hasattr(user, "is_employee"):
             queryset = (
-                Cart.objects.all().select_related("client").prefetch_related("facility_products")
+                Cart.objects.all()
+                .select_related("client")
+                .prefetch_related("facility_products")
             )
         else:
             queryset = (
@@ -58,9 +68,13 @@ class SaleViewSet(ModelViewSet):
         user = self.request.user
         if hasattr(user, "staff"):
             user = user.staff
-            queryset = Sale.objects.filter(facility=user.facility).prefetch_related("facility_products")
+            queryset = Sale.objects.filter(facility=user.facility).prefetch_related(
+                "facility_products"
+            )
         elif hasattr(user, "client"):
-            queryset = Sale.objects.filter(client=user.client).prefetch_related("facility_products")
+            queryset = Sale.objects.filter(client=user.client).prefetch_related(
+                "facility_products"
+            )
         return queryset
 
     def get_serializer_context(self):
@@ -97,8 +111,6 @@ class OrderViewSet(ModelViewSet):
         m for m in ModelViewSet.http_method_names if m not in ["put", "delete"]
     ]
 
-    TERMINAL_STATUSES = ["completed", "cancelled"]
-
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context["request"] = self.request
@@ -108,7 +120,7 @@ class OrderViewSet(ModelViewSet):
         if self.action in ["create"]:
             permission_classes = [IsClient]
         elif self.action in ["list", "retrieve"]:
-            permission_classes = [IsClient|IsRetail]
+            permission_classes = [IsClient | IsRetail]
         else:
             permission_classes = [IsRetail]
         return [permission() for permission in permission_classes]
@@ -124,23 +136,21 @@ class OrderViewSet(ModelViewSet):
         queryset = self.get_queryset()
 
         if not queryset.exists():
-            return Response({"detail":_("Cart is empty.")})
+            return Response({"detail": _("Cart is empty.")})
         return super().list(request, *args, **kwargs)
 
     def partial_update(self, request, *args, **kwargs):
         user = request.user
         order = self.get_object()
 
-        if order.status in self.TERMINAL_STATUSES:
+        if order.status in TERMINAL_STATUSES:
             raise ValidationError(
-                    {
-                        "status":_(f"Cannot modify order in {order.status} status")
-                    }
-                )
+                {"status": _(f"Cannot modify order in {order.status} status")}
+            )
 
         new_status = request.data.get("status", None)
         if not new_status:
-            raise ValidationError(_("The 'status' field is required"))
+            raise ValidationError({"status": _("The 'status' field is required")})
 
         try:
             with transaction.atomic():
@@ -167,12 +177,68 @@ class OrderViewSet(ModelViewSet):
                             f"Order status updated to: '{order.status.title()}'"
                         ),
                         "data": response.data,
-                    }, status=200
+                    },
+                    status=200,
                 )
 
         except ValidationError as e:
             raise e
         except Exception as e:
-            raise ValidationError({
-                "detail": _(f"Failed to update order: {str(e)}")
-            })
+            raise ValidationError({"detail": _(f"Failed to update order: {str(e)}")})
+
+
+class PrescriptionViewSet(ModelViewSet):
+    permission_classes = [IsClient | IsRetail]
+    queryset = Prescription.objects.none()
+    serializer_class = PrescriptionSerializer
+    http_method_names = [
+        m for m in ModelViewSet.http_method_names if m not in ["put", "delete"]
+    ]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["request"] = self.request
+        return context
+
+    def get_queryset(self):
+        user = self.request.user
+        if hasattr(user, "staff"):
+            queryset = Prescription.objects.all().select_related("client")
+        elif hasattr(user, "client"):
+            queryset = Prescription.objects.filter(client=user.client).select_related(
+                "client"
+            )
+        else:
+            return super().get_queryset()
+        return queryset
+
+    def get_permissions(self):
+        if self.action in ["create"]:
+            permission_classes = [IsClient]
+        elif self.action in ["list", "retrieve"]:
+            permission_classes = [IsClient | IsRetail]
+        else:
+            permission_classes = [IsRetail]
+        return [permission() for permission in permission_classes]
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+
+        if not queryset.exists():
+            return Response({"detail": _("No prescriptions uploaded")})
+        return super().list(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        user = request.user
+        prescription = self.get_object()
+
+        if prescription.status in TERMINAL_STATUSES:
+            raise ValidationError(
+                {"status": _(f"Cannot modify order in {order.status} status")}
+            )
+
+        new_status = request.data.get("status", None)
+        if not new_status:
+            raise ValidationError({"status": _("The 'status' field is required")})
+        
+        return super().partial_update(request, *args, **kwargs)
